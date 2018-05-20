@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+#tax_income 应纳所得额，tax_payable:应纳税额 简写（tp），income:收入 ，social_security：社保
+#各项保险费占工资比列：养老8％，医疗2％，失业：0.5％，工伤、生育0，公积金6％
+#计算应纳所得额＝工资－各项保险费－起征点（3500）
+#计算税额 ＝ 应纳税所得额＊税率 －速算扣除数
+
+import sys
+import csv #写入csv文件
+
+class Args(object):
+    def __init__(self):
+        l = sys.argv[1:]
+        self.c = l[l.index('-c')+1]
+        self.d = l[l.index('-d')+1]
+        self.o = l[l.index('-o')+1]
+
+args = Args()
+
+class Config(object):
+    def __init__(self):
+        self.config = self._read_config()
+    def _read_config(self):
+        config = {'f':0}
+        try:
+            with open(args.c) as c:
+                for k in c.readlines():
+                    k = k.strip().split('=')
+                    key,value = k[0].strip(),k[1].strip()
+                    if key == 'JiShuL' or key == 'JiShuH':
+                        config[key] = float(value)
+                    else:
+                        config['f'] += float(value)   #f：其它保险比例
+        except:
+            print('Config error')
+            exit()
+        return config
+
+config = Config().config
+
+class UserData(object):
+    def __init__(self):
+        self.userdata = self._read_users_data()
+    def _read_users_data(self):
+        try:
+            with open(args.d) as d:
+                userdata = list(csv.reader(d))
+                return userdata
+        except:
+            print('error')
+            exit()
+
+userdata = UserData().userdata
+
+def cal(salary):
+        smoney = salary * config['f']
+        if salary < config['JiShuL']:
+            smoney = config['JiShuL'] * config['f']
+        if salary > config['JiShuH']:
+            smoney = config['JiShuH'] * config['f']
+        ti = salary - smoney -3500
+        if ti < 0:
+            tp = 0
+        elif 0 <= ti <= 1500:
+            tp = ti * 0.03 
+ 
+        elif 1500 < ti <= 4500:
+            tp = ti * 0.1 - 105 
+
+        elif 4500 < ti <= 9000:
+            tp = ti * 0.2 - 555
+
+        elif 9000 < ti <= 35000:
+            tp = ti * 0.25 - 1005 
+
+        elif 35000 < ti <= 55000:
+            tp = ti * 0.3 - 2755 
+
+        elif 55000 < ti <= 80000:
+            tp = ti * 0.35 - 5505
+
+        else:
+            tp = ti * 0.45 - 13505
+        return [salary, format(smoney, '.2f'), 
+            format(tp, '.2f'), format(salary-smoney-tp, '.2f')]
+
+if __name__=='__main__':
+    with open(args.o, 'w') as f:
+        for a, b in userdata:
+            l = cal(int(b))
+            l.insert(0, a)
+            csv.writer(f).writerow(l)
+'''
+
+class IncomeTaxCalculator(object):
+     工号，税前工资，社保金，个税金，税后工资
+ tax_income 应纳所得额，tax_payable:应纳税额 简写（ti），income:收入 ，social_money：社保
+ 计算应纳所得额＝工资－各项保险费－起征点（3500）
+#计算税额 ＝ 应纳税所得额＊税率 －速算扣除数
+    def cacl_social_money(self):
+        userdate = UserData().userdata
+        config = Config().config
+        for user in userdata:
+            smoney = userdata[1]*config['f']
+            if user[1] <= config['JiShuL']:
+                smoney = config['JiShuL']*config['f']
+            if userdata[1] >= config['JiShuH']:
+                smoney = config['JiShuH']*config['f']
+        return smoney
+    def cacl_tax_payable(self):
+        userdate = UserData().userdata
+        smoney = self.cacl_social_money(smoney)
+        ti = userdata[1] - smoney -3500
+        if ti < 0:
+            tp = 0
+        elif 0 <= ti <= 1500:
+            tp = ti * 0.03 
+ 
+        elif 1500 < ti <= 4500:
+            tp = ti * 0.1 - 105 
+
+        elif 4500 < ti <= 9000:
+            tp = ti * 0.2 - 555
+
+        elif 9000 < ti <= 35000:
+            tp = ti * 0.25 - 1005 
+
+        elif 35000 < ti <= 55000:
+            tp = ti * 0.3 - 2755 
+
+        elif 55000 < ti <= 80000:
+            tp = ti * 0.35 - 5505
+
+        else:
+            tp = ti * 0.45 - 13505
+        at = user[1] - smoney - tp
+        return tp,at
+
+    def calc_for_all_userdata(self):
+        userdate = UserData().userdata
+        resultlist = []
+        for user in userdate:
+            smoney = self.cacl_social_money(user[1],smoney)
+            tp = self.cacl_tax_payable(user[1],tp)
+            at = self.cacl_tax_payable(user[1],at)
+            result = (user[0],'{:2f},{:2f},{:2f},{:2f}'.format(user[1],someny,tp,at))
+            resultlist.append(result)
+        return resultlist
+    def export(self,defaultt='csv'):
+        result = self.cacl_for_all_userdata()
+        with open('args.o') as f:
+            writer = csv.writer(f)
+            writer.writerows(result)
+'''
+
