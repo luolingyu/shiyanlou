@@ -3,7 +3,7 @@ import sys
 
 
 def analysis(file,id):
-    df =  pd.read_json(file)
+    df =  pd.read_json(file) #打开json，
     d = df[df['user_id']== id]
     times = len(d)
     minutes = d['minutes'].sum()
@@ -21,3 +21,6 @@ if __name__=='__main__':
     '''
     file, id = args
     print(analysis(file, int(id)))
+#id = sys.argv[1]
+#file = int(sys.argv[2])
+#
